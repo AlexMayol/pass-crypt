@@ -1,0 +1,282 @@
+---
+import { decrypt, encrypt } from "../lib";
+
+let result = "";
+let password = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const text = data.get("text") as string;
+    const action = data.get("action") as string;
+    let userPassword = data.get("password") as string;
+    if (userPassword) password = userPassword;
+
+    if (action === "Decrypt") {
+      const decrypted = await decrypt(text, password);
+      result += decrypted;
+    }
+    if (action === "Encrypt") {
+      const encrypted = await encrypt(text, password);
+      result += encrypted;
+    }
+  } catch (e) {
+    if (e instanceof Error) {
+      error = e.message;
+    }
+  }
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="msapplication-TileColor" content="#da532c" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Pass Protect | Encrypt and decrypt your data</title>
+    <style>
+      .decode-text {
+        width: 100%;
+        font-size: 30px;
+        text-align: center;
+      }
+
+      .space {
+        display: inline-block;
+        width: 10px;
+      }
+
+      .text-animation {
+        display: inline-block;
+        position: relative;
+        color: transparent;
+        text-transform: uppercase;
+      }
+      .text-animation:before {
+        content: "";
+        color: black;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        background: #0e182d;
+        width: 0;
+        height: 1.2em;
+        -webkit-transform: translate(-50%, -55%);
+        -ms-transform: translate(-50%, -55%);
+        transform: translate(-50%, -55%);
+      }
+      .text-animation.state-1:before {
+        width: 1px;
+      }
+      .text-animation.state-2:before {
+        width: 0.9em;
+      }
+      .text-animation.state-3 {
+        color: black;
+      }
+      .text-animation.state-3:before {
+        width: 0;
+      }
+
+      #refresh {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        cursor: pointer;
+      }
+
+      div {
+        font-family: "Share Tech Mono", monospace;
+      }
+    </style>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <main class="flex-1">
+      <div class="decode-text">
+        <div class="text-animation">E</div>
+        <div class="text-animation">n</div>
+        <div class="text-animation">c</div>
+        <div class="text-animation">r</div>
+        <div class="text-animation">y</div>
+        <div class="text-animation">p</div>
+        <div class="text-animation">t</div>
+        <div class="space"></div>
+
+        <div class="text-animation">y</div>
+        <div class="text-animation">o</div>
+        <div class="text-animation">u</div>
+        <div class="text-animation">r</div>
+        <div class="space"></div>
+
+        <div class="text-animation">d</div>
+        <div class="text-animation">a</div>
+        <div class="text-animation">t</div>
+        <div class="text-animation">a</div>
+      </div>
+
+      <form
+        id="pass-protect"
+        class="flex flex-col p-8 mx-auto items-center space-y-4"
+        action="/"
+        method="post"
+        enctype="application/x-www-form-urlencoded"
+      >
+        <textarea
+          id="text"
+          name="text"
+          class="w-[80vw] h-[400px] resize rounded-lg border border-slate-200 p-3 pb-5 text-xs font-normal placeholder-slate-500 outline-none transition-all duration-300 ease-in-out scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thin scrollbar-track-transparent scrollbar-thumb-blue-700 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:placeholder-slate-400 focus:border-blue-600"
+          placeholder="Text to encrypt or decrypt">{result}</textarea
+        >
+        <label class="hidden" for="password"> Password </label>
+        <input
+          id="password"
+          name="password"
+          type="text"
+          class="w-[80vw] mb-0.5 rounded-lg border border-slate-200 px-3 text-xs font-medium placeholder-slate-400 outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:placeholder-slate-400focus:border-blue-600 py-2"
+          placeholder="Password"
+          value={password}
+        />
+        <div class="flex space-x-16">
+          <input
+            class="group inline-flex items-center justify-center whitespace-nowrap rounded-lg py-2 align-middle text-sm font-semibold leading-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed bg-blue-700 stroke-white px-6 text-white hover:bg-blue-950 h-[38px] min-w-[38px] gap-2 disabled:bg-slate-100 disabled:stroke-slate-400 disabled:text-slate-400 disabled:hover:bg-slate-100"
+            type="submit"
+            name="action"
+            value="Encrypt"
+          />
+          <input
+            class="group inline-flex items-center justify-center whitespace-nowrap rounded-lg py-2 align-middle text-sm font-semibold leading-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed bg-blue-700 stroke-white px-6 text-white hover:bg-blue-950 h-[38px] min-w-[38px] gap-2 disabled:bg-slate-100 disabled:stroke-slate-400 disabled:text-slate-400 disabled:hover:bg-slate-100"
+            type="submit"
+            name="action"
+            value="Decrypt"
+          />
+        </div>
+      </form>
+      <div class="flex justify-center">
+        <button
+          id="reset"
+          class="group inline-flex items-center justify-center whitespace-nowrap rounded-lg py-2 align-middle text-sm font-semibold leading-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed border border-slate-200 bg-transparent stroke-black px-6 text-black hover:border-blue-700 hover:bg-blue-700 hover:stroke-white hover:text-white h-[38px] min-w-[38px] gap-2 disabled:border-slate-100 disabled:bg-white disabled:stroke-slate-400 disabled:text-slate-400 disabled:hover:bg-white"
+          >Reset</button
+        >
+      </div>
+
+      {
+        error && (
+          <div class="flex justify-center mt-4 w-full">
+            <span class="bg-red-300 text-red-800 px-4 py-2 rounded-lg max-w-[80vw] text-sm transition-all duration-300">
+              {error}
+            </span>
+          </div>
+        )
+      }
+    </main>
+
+    <footer class="p-4 bg-slate-100 flex justify-center">
+      <a href="https://github.com/AlexMayol/pass-crypt" target="_blank"
+        >Learn more</a
+      >
+    </footer>
+
+    <script>
+      const reset = document.getElementById("reset");
+      reset?.addEventListener("click", () => {
+        const text = document.getElementById("text") as HTMLTextAreaElement;
+        const password = document.getElementById(
+          "password"
+        ) as HTMLInputElement;
+        text.value = "";
+        password.value = "";
+      });
+    </script>
+
+    <script>
+      /*
+      https://codepen.io/BRacicot/pen/Nryjpa
+      ------------------------------------------------------------------------ *  
+4 states per letter: Transparent | Line | Block | Visible.
+These states are shuffled for a unique "decode" effect each time.
+* ------------------------------------------------------------------------ */
+
+      function decodeText() {
+        var text = document.getElementsByClassName("decode-text")[0];
+        // debug with
+        // console.log(text, text.children.length);
+
+        // assign the placeholder array its places
+        var state = [];
+        for (var i = 0, j = text.children.length; i < j; i++) {
+          text.children[i].classList.remove("state-1", "state-2", "state-3");
+          state[i] = i;
+        }
+
+        // shuffle the array to get new sequences each time
+        var shuffled = shuffle(state);
+
+        for (var i = 0, j = shuffled.length; i < j; i++) {
+          var child = text.children[shuffled[i]];
+          var classes = child.classList;
+
+          // fire the first one at random times
+          var state1Time = Math.round(Math.random() * (2000 - 300)) + 50;
+          if (classes.contains("text-animation")) {
+            setTimeout(firstStages.bind(null, child), state1Time);
+          }
+        }
+      }
+
+      // send the node for later .state changes
+      function firstStages(child: Element) {
+        if (child.classList.contains("state-2")) {
+          child.classList.add("state-3");
+        } else if (child.classList.contains("state-1")) {
+          child.classList.add("state-2");
+        } else if (!child.classList.contains("state-1")) {
+          child.classList.add("state-1");
+          setTimeout(secondStages.bind(null, child), 100);
+        }
+      }
+      function secondStages(child: Element) {
+        if (child.classList.contains("state-1")) {
+          child.classList.add("state-2");
+          setTimeout(thirdStages.bind(null, child), 100);
+        } else if (!child.classList.contains("state-1")) {
+          child.classList.add("state-1");
+        }
+      }
+      function thirdStages(child: Element) {
+        if (child.classList.contains("state-2")) {
+          child.classList.add("state-3");
+        }
+      }
+
+      function shuffle(array: number[]) {
+        var currentIndex = array.length,
+          temporaryValue,
+          randomIndex;
+
+        // While there remain elements to shuffle...
+        while (0 !== currentIndex) {
+          // Pick a remaining element...
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex -= 1;
+
+          // And swap it with the current element.
+          temporaryValue = array[currentIndex];
+          array[currentIndex] = array[randomIndex];
+          array[randomIndex] = temporaryValue;
+        }
+        return array;
+      }
+
+      setTimeout(function () {
+        decodeText();
+      }, 1000);
+    </script>
+  </body>
+</html>
